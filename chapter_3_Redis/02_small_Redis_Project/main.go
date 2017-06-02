@@ -1,7 +1,6 @@
 package main
 
 import (
-	"time"
 	"net/http"
 	"github.com/julienschmidt/httprouter"
 	"fmt"
@@ -9,7 +8,9 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
-	"github.com/garyburd/redigo/redis"
+	"text/template"
+	"os"
+	"bufio"
 )
 
 /*
@@ -24,34 +25,8 @@ http://localhost/posts will display all posts in JSON and
 http://localhost/posts/id will get you the post with the given id.
 */
 
-type User struct{
-	Id int
-	UserName string
-	Email string
-}
 
-type Comment struct{
-	Id int
-	User User
-	Text string
-	Timestamp time.Time
 
-}
-
-type Post struct{
-	Id int
-	User User
-	Topic string
-	Text string
-	Timestamp time.Time
-}
-
-type Route struct {
-	Method string             // HTTP Method
-	Path string               // Path of the end point
-	Handle httprouter.Handle  //defining the type here.We are telling that
-	                          // this is a function type.
-}
 
 
 /*
@@ -67,30 +42,14 @@ var users = make(map[int]User)
 var posts = make(map[int]Post)
 var comments = make(map[int]Comment)
 
-var routers = []Route{
-	{
-		"GET",
-		"/",
-		Index,
-	},
-	{
-		"GET",    //Here Get me all the posts
-		"/posts",
-		PostIndex,
-	},
-	{
-		"GET",   //Get me particular post
-		"/posts/:id",
-		PostShow,
-	},
-	{
-		"POST",  //Add in to existing posts
-		"/posts",
-		PostCreate,
-	},
 
-}
+/*For reading the configuration file from property file*/
+var server string
+var port string
 
+//Id for Post and User
+var postId int
+var userId int
 
 
 func handlePanic(err error){
@@ -99,8 +58,17 @@ func handlePanic(err error){
 	}
 }
 
+//Welcome on Home page
+func Index(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
+	content,err := ioutil.ReadFile("welcomepage.html")
+	handlePanic(err)
+	fmt.Fprintf(rw,string(content))
+}
+
 // Get all the posts
 func PostIndex(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
+
+
 
 }
 
@@ -110,25 +78,37 @@ func PostShow(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
 	//params.ByName() func returns the string...so need to convert it in to
 	// integer
 	id,err := strconv.Atoi(params.ByName("id"))
+
 	fmt.Println("The id received as a parameter is ",id)
 	handlePanic(err)
+	if id == 0 {
+		rw.WriteHeader(http.StatusNoContent)
+	}
 	post := findPost(id)
+
+	/*
+	              IMPORTANT
+
+	This is interesting here,We are not allowed to compare the Post struct with
+	 nil as they are of different types."nil" can be used for comparision on with
+	 functions,channels,interface,slices,maps and pointers.So we got the post from
+	 the findPost and then we are taking the pointer of that so that we could compare
+	  it
+	*/
+	if &post == nil {
+		rw.WriteHeader(http.StatusNoContent)
+		fmt.Fprintf(rw,"No Content found")
+	}
+
+
+
 	ret,_ := json.Marshal(post)
 	fmt.Fprintf(rw,string(ret))
-}
-
-//Welcome on Home page
-func Index(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
-	fmt.Fprintf(rw,"Welcome to Blog Post.Please write Your Blogs here.")
-
 }
 
 
 //Add in to existing posts
 func PostCreate(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
-	id,err := strconv.Atoi(params.ByName("id"))
-	handlePanic(err)
-	fmt.Println("The id received as a parameter is ",id)
 
 	//First get the data in to byte stream..so that we could create structure out of
 	//it.
@@ -141,51 +121,23 @@ func PostCreate(rw http.ResponseWriter,r *http.Request,params httprouter.Params)
 	}
 
 	//Now time to get What we got as a Body from the POST request
-
 	var newPost Post
 	err = json.Unmarshal(data,&newPost)
 	handlePanic(err)
-	updateData(newPost)
+
+	userId++
+	postId++
+	updateData(postId,newPost)
 	rw.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(rw,strconv.Itoa(id))
+	fmt.Fprintf(rw,strconv.Itoa(postId))
 }
 
-/*
-               ALL REDIS RELATED FUNCTIONS
-
-*/
-
-
-func findALL() []Post{
-	conn,err := redis.Dial("tcp",":6379")
-	handlePanic(err)
-	defer conn.Close()
-
-
-}
-
-func updateData(post Post){
-	conn,err := redis.Dial("tcp",":6379")
-	handlePanic(err)
-	defer conn.Close()
-	conn.Do("SET",post.Id,post)
-
-	conn.Do("SET","KEYS",)
-}
-
-
-func findPost(key int) Post{
-	conn, error := redis.Dial("tcp",":6379")
-	handlePanic(error)
-	defer conn.Close()
-	reply,err := conn.Do("GET",key)
-	handlePanic(err)
-	var post Post
-	err = json.Unmarshal(reply.([]byte),&post)
-	handlePanic(err)
-	return post
-}
 
 func main(){
+	router := registerRouters()
 
+	/*So finally we register here*/
+	http.ListenAndServe(":8080",router)
+	postId = 0
+	userId = 0
 }

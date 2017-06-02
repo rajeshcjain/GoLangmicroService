@@ -67,6 +67,7 @@ func handleFunc(rw http.ResponseWriter,req *http.Request,params httprouter.Param
 	fmt.Println("Updated the Redis..")
 }
 
+
 /*
 
 				THIS IS IMPORTANT
@@ -95,8 +96,8 @@ func connect() redis.Conn{
 */
 func updateRedis(data []byte,key string){
 	c := connect()
+	defer c.Close()
 	c.Do("SET",key,data)
-	c.Close()
 }
 
 
@@ -105,7 +106,7 @@ func updateRedis(data []byte,key string){
 
 func getFromRedis(key string) []byte{
 	c := connect()
-
+	defer c.Close()
 	fmt.Println("Connected with Redis")
 
 	reply,err := c.Do("GET",key)
@@ -131,8 +132,10 @@ func getFromRedis(key string) []byte{
 	if err != nil{
 		log.Fatalln(err)
 	}
-	c.Close()
+
 	return byteStream
 }
+
+
 
 
