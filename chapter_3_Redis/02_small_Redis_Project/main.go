@@ -8,9 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"strconv"
-	"text/template"
-	"os"
-	"bufio"
 )
 
 /*
@@ -26,9 +23,6 @@ http://localhost/posts/id will get you the post with the given id.
 */
 
 
-
-
-
 /*
 We can not have a single post,User and comment on the blog..So defining the
 Data structure for it...i.e multiple user,posts and comments.
@@ -38,18 +32,16 @@ Data structure for it...i.e multiple user,posts and comments.
 //var posts = []Post{}
 //var comments = []Comment{}
 
-var users = make(map[int]User)
-var posts = make(map[int]Post)
-var comments = make(map[int]Comment)
+//var users = make(map[int]User)
+//var posts = make(map[int]Post)
+//var comments = make(map[int]Comment)
 
 
 /*For reading the configuration file from property file*/
 var server string
 var port string
 
-//Id for Post and User
-var postId int
-var userId int
+
 
 
 func handlePanic(err error){
@@ -64,6 +56,24 @@ func Index(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
 	handlePanic(err)
 	fmt.Fprintf(rw,string(content))
 }
+
+//Deleting the Post
+func PostDel(rw http.ResponseWriter,w *http.Request, params httprouter.Params){
+	postId := params.ByName("id")
+	id,err := strconv.Atoi(postId)
+	handlePanic(err)
+	ret := deletePost(id)
+
+	if ret == 1{
+		rw.WriteHeader(http.StatusOK)
+		rw.Header().Set("Content-Type","application/json")
+		fmt.Fprintf(rw,"Post number " + postId)
+	}else{
+		rw.WriteHeader(http.StatusNoContent)
+		fmt.Fprintf(rw,"Post Does not exists")
+	}
+}
+
 
 // Get all the posts
 func PostIndex(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
@@ -83,6 +93,7 @@ func PostShow(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
 	handlePanic(err)
 	if id == 0 {
 		rw.WriteHeader(http.StatusNoContent)
+		fmt.Fprintf(rw,"No Content found")
 	}
 	post := findPost(id)
 
@@ -100,16 +111,15 @@ func PostShow(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
 		fmt.Fprintf(rw,"No Content found")
 	}
 
-
-
 	ret,_ := json.Marshal(post)
+	rw.WriteHeader(http.StatusOK)
+	rw.Header().Set("Content-Type","application/json")
 	fmt.Fprintf(rw,string(ret))
 }
 
 
 //Add in to existing posts
 func PostCreate(rw http.ResponseWriter,r *http.Request,params httprouter.Params){
-
 	//First get the data in to byte stream..so that we could create structure out of
 	//it.
 	data,err := ioutil.ReadAll(r.Body)
@@ -124,20 +134,18 @@ func PostCreate(rw http.ResponseWriter,r *http.Request,params httprouter.Params)
 	var newPost Post
 	err = json.Unmarshal(data,&newPost)
 	handlePanic(err)
+	postId := createPost(newPost)
 
-	userId++
-	postId++
-	updateData(postId,newPost)
 	rw.WriteHeader(http.StatusCreated)
-	fmt.Fprintf(rw,strconv.Itoa(postId))
+	rw.Header().Set("Content-Type","application/json")
+	fmt.Fprintf(rw,"blog id " + strconv.Itoa(postId))
 }
 
 
 func main(){
 	router := registerRouters()
-
 	/*So finally we register here*/
+	fmt.Println("Listening 8080")
 	http.ListenAndServe(":8080",router)
-	postId = 0
-	userId = 0
+
 }
