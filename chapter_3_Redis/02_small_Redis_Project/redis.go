@@ -21,14 +21,15 @@ var userId int
 func init(){
 	postId = 0
 	userId = 0
+	readConfig()
 }
 
 
 
 //Connection logic at one place to avoid little work :)
 func Connect() redis.Conn {
-	//server := server + ":" + port
-	server := ":6379"
+	server := server + ":" + port
+	//server := ":6379"
 	fmt.Println("server is ",server)
 	conn,err := redis.Dial("tcp",":6379")
 	fmt.Println("1")
@@ -45,6 +46,7 @@ func findALL() []Post{
 
 
 func createPost(post Post) int {
+	fmt.Println()
 	postId++
 	userId++
 	post.Id = postId

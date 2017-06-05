@@ -133,7 +133,7 @@ func PostCreate(rw http.ResponseWriter,r *http.Request,params httprouter.Params)
 	err = json.Unmarshal(data,&newPost)
 
 	handlePanic(err)
-	postId := createPost(newPost)
+	createPost(newPost)
 
 	rw.WriteHeader(http.StatusCreated)
 	rw.Header().Set("Content-Type","application/json; charset=UTF-8 ")
