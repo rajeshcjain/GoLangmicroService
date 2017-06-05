@@ -136,7 +136,7 @@ func PostCreate(rw http.ResponseWriter,r *http.Request,params httprouter.Params)
 	postId := createPost(newPost)
 
 	rw.WriteHeader(http.StatusCreated)
-	rw.Header().Set("Content-Type","application/json")
+	rw.Header().Set("Content-Type","application/json; charset=UTF-8 ")
 	fmt.Fprintf(rw,"blog id " + strconv.Itoa(postId))
 }
 
