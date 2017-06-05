@@ -131,9 +131,9 @@ func PostCreate(rw http.ResponseWriter,r *http.Request,params httprouter.Params)
 	//Now time to get What we got as a Body from the POST request
 	var newPost Post
 	err = json.Unmarshal(data,&newPost)
-	//handlePanic(err)
+
+	handlePanic(err)
 	postId := createPost(newPost)
-	fmt.Println("one post submitted with id ",postId)
 
 	rw.WriteHeader(http.StatusCreated)
 	rw.Header().Set("Content-Type","application/json")

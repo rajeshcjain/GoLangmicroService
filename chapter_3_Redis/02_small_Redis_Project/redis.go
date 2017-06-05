@@ -5,7 +5,10 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"strconv"
 	"fmt"
+<<<<<<< HEAD
 	"time"
+=======
+>>>>>>> d1debd04d2e3f8eeb6cf68fc93d36cc4b53cc52b
 )
 
 
@@ -27,11 +30,15 @@ func init(){
 
 //Connection logic at one place to avoid little work :)
 func Connect() redis.Conn {
+<<<<<<< HEAD
 	//server := server + ":" + port
 	server := ":6379"
 	fmt.Println("server is ",server)
 	conn,err := redis.Dial("tcp",":6379")
 	fmt.Println("1")
+=======
+	conn,err := redis.Dial("tcp",server + ":" + port)
+>>>>>>> d1debd04d2e3f8eeb6cf68fc93d36cc4b53cc52b
 	handlePanic(err)
 	return conn
 }
@@ -52,6 +59,7 @@ func createPost(post Post) int {
 	fmt.Println("creating post ",post)
 	conn := Connect()
 	defer conn.Close()
+<<<<<<< HEAD
 	//updating the redis-db with the time
 	post.Timestamp = time.Now()
 
@@ -72,6 +80,18 @@ func createPost(post Post) int {
 	//}
 
 	return 1
+=======
+	reply, err := conn.Do("SET",postId,post)
+
+	handlePanic(err)
+	if reply.(int) != 1{
+		fmt.Println("No Post created")
+		return 0
+	}else{
+		fmt.Println("Post created")
+		return 1
+	}
+>>>>>>> d1debd04d2e3f8eeb6cf68fc93d36cc4b53cc52b
 
 }
 
@@ -79,7 +99,11 @@ func updateData(postId int,post Post) int{
 	conn := Connect()
 	defer conn.Close()
 	reply,err := conn.Do("SET",strconv.Itoa(postId),post)
+<<<<<<< HEAD
 	handlePanic(err)
+=======
+        handlePanic(err)
+>>>>>>> d1debd04d2e3f8eeb6cf68fc93d36cc4b53cc52b
 
 	if reply.(int) != 1{
 		fmt.Println(postId, "is not updated")
@@ -104,7 +128,11 @@ func deletePost(key int) int {
 		return 0
 	}else{
 		fmt.Println("Post removed")
+<<<<<<< HEAD
 		return 1
+=======
+             return 1
+>>>>>>> d1debd04d2e3f8eeb6cf68fc93d36cc4b53cc52b
 	}
 }
 
