@@ -2,14 +2,12 @@ package main
 
 import (
 	"github.com/julienschmidt/httprouter"
-	"net/http"
 )
 
 
 /*
 Registering the routers
 Reading it from routers slice and range it and register with the httprouter.
-
 */
 func registerRouters() *httprouter.Router{
 

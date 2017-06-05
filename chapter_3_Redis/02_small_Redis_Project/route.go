@@ -12,7 +12,7 @@ type Route struct {
 
 var routers = []Route{
 	{
-		"GET",
+		"GET",   //Home Page
 		"/",
 		Index,
 	},
@@ -31,6 +31,10 @@ var routers = []Route{
 		"/posts",
 		PostCreate,
 	},
+	{
+		"DELETE",  //Deleting the Post
+		"/posts/:id",
+		PostDel,
+	},
 
 }
-
